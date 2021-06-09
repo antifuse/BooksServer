@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -24,6 +25,9 @@ public class BookController {
     public List<Book> getAllBooks(@RequestParam Map<String,String> allRequestParams) {
         Specification<Book> spec = (root, criteriaQuery, criteriaBuilder) -> {
             Predicate p = null;
+            if (allRequestParams.containsKey("q")) {
+                return criteriaBuilder.or(Arrays.stream(Book.class.getDeclaredFields()).filter(field -> !field.getName().equalsIgnoreCase("createdAt")).map(field -> root.get(field.getName()).getJavaType() == String.class ? criteriaBuilder.like(root.get(field.getName()), "%" + allRequestParams.get("q") +"%") : criteriaBuilder.equal(root.get(field.getName()), allRequestParams.get("q").matches("-?\\\\d+") ? Integer.parseInt(allRequestParams.get("q")) : -1)).toArray(Predicate[]::new));
+            }
             for (var pair : allRequestParams.entrySet()) {
                 if (Arrays.stream(Book.class.getDeclaredFields()).noneMatch(f -> f.getName().equalsIgnoreCase(pair.getKey())))
                     continue;
@@ -41,6 +45,11 @@ public class BookController {
     @PostMapping("/books")
     public Book createBook(@Validated @RequestBody Book book) {
         return bookRepository.save(book);
+    }
+
+    @PostMapping("/books/bulk")
+    public List<Book> createBooks(@Validated @RequestBody List<Book> books) {
+        return bookRepository.saveAll(books);
     }
 
     @GetMapping("/book/{id}")
