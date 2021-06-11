@@ -62,6 +62,7 @@ public class BookController {
     public ResponseEntity<Book> updateBook(@PathVariable(value="id") Long id, @Validated @RequestBody Book bookDetails) {
         Book book = bookRepository.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND, "Book " + id + " not found"));
         book.setAuthor(bookDetails.getAuthor());
+        book.setYear(bookDetails.getYear());
         book.setTitle(bookDetails.getTitle());
         book.setIsbn(bookDetails.getIsbn());
         book.setPublisher(bookDetails.getPublisher());
